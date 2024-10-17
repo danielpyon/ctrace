@@ -16,7 +16,26 @@ struct AuditLogEntry {
     time: f64
 }
 
-fn parse_dmesg(s: &str) {
+#[derive(Default)]
+struct SyscallLogEntry {
+    syscall: String,
+    time: f64
+}
+
+fn parse_strace(s: &str) -> Vec<SyscallLogEntry> {
+    let mut syscall_log_entries: Vec<SyscallLogEntry> = Vec::new();
+    
+    for line in s.lines() {
+        let mut entry = SyscallLogEntry::default();
+        let time_and_syscall = line.split(" ").collect::<Vec<&str>>();
+        entry.time = time_and_syscall[0].parse().unwrap_or(0.0);
+        entry.syscall = time_and_syscall[1].to_string();
+    }
+
+    syscall_log_entries
+}
+
+fn parse_dmesg(s: &str) -> Vec<AuditLogEntry> {
     // store ordered list of structs, each containing which capability was triggered (eg: net_raw)
     let mut audit_log_entries: Vec<AuditLogEntry> = Vec::new();
 
@@ -56,10 +75,31 @@ fn parse_dmesg(s: &str) {
         println!("found audit log entry (cap={}, time={})", entry.cap, entry.time);
         audit_log_entries.push(entry);
     }
+
+    audit_log_entries
+}
+
+fn syscalls_within_window<'a>(audit: &AuditLogEntry, syscalls: &'a [SyscallLogEntry], window: f64) -> Vec<&'a SyscallLogEntry> {
+    let min = audit.time - window;
+    let max = audit.time + window;
+
+    syscalls.iter()
+        .filter(|s| s.time >= min && s.time <= max)
+        .collect()
+}
+
+fn print_relevant_syscalls(audits: &[AuditLogEntry], syscalls: &[SyscallLogEntry]) {
+    for audit in audits {
+        println!("--- syscalls for capability {} [{}]:", audit.cap, audit.time);
+        for syscall in syscalls_within_window(audit, syscalls, 0.5) {
+            println!("[{}]: {}", syscall.time, syscall.syscall);
+        }
+    }
 }
 
 fn main() {
     let dmesg_path = Path::new("dmesg.txt");
+    let strace_path = Path::new("strace.txt");
     let display = dmesg_path.display();
 
     let mut file = match File::open(&dmesg_path) {
@@ -68,8 +108,20 @@ fn main() {
     };
 
     let mut s = String::new();
-    match file.read_to_string(&mut s) {
+    let audit_log_entries = match file.read_to_string(&mut s) {
         Err(why) => panic!("couldn't read {}: {}", display, why),
         Ok(_) => parse_dmesg(&s),
-    }
+    };
+
+    file = match File::open(&strace_path) {
+        Err(why) => panic!("couldn't open {}: {}", display, why),
+        Ok(file) => file,
+    };
+
+    let syscall_log_entries = match file.read_to_string(&mut s) {
+        Err(why) => panic!("couldn't read {}: {}", display, why),
+        Ok(_) => parse_strace(&s),
+    };
+
+    print_relevant_syscalls(&audit_log_entries, &syscall_log_entries);
 }
