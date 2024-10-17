@@ -1,0 +1,13 @@
+1729139118.377905 read(0, "\n", 1024)   = 1
+1729139121.978517 fchownat(AT_FDCWD, "ownme.txt", 1000, 1000, 0) = 0
+1729139121.978923 write(1, "chown succeeded!\n", 17) = 17
+1729139121.979465 write(1, "priv1 done!\n", 12) = 12
+1729139121.980181 write(1, "\n", 1)     = 1
+1729139121.980517 write(1, "about to run priv2... press any "..., 60) = 60
+1729139121.980948 read(0, "\n", 1024)   = 1
+1729139122.256730 socket(AF_PACKET, SOCK_RAW, htons(0 /* ETH_P_??? */)) = 3
+1729139122.257220 close(3)              = 0
+1729139122.271079 write(1, "priv2 done!\n", 12) = 12
+1729139122.271491 write(1, "\n", 1)     = 1
+1729139122.272000 write(1, "about to run priv1... press any "..., 60) = 60
+1729139122.272419 read(0, 

@@ -1,0 +1,2 @@
+[ 6166.462563] audit: type=1400 audit(1729139090.263:82): apparmor="AUDIT" operation="capable" profile="/home/debian/Downloads/test" pid=14680 comm="test" capability=13  capname="net_raw"
+[ 6198.452567] audit: type=1400 audit(1729139122.253:83): apparmor="AUDIT" operation="capable" profile="/home/debian/Downloads/test" pid=14680 comm="test" capability=13  capname="net_raw"
